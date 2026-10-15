@@ -85,22 +85,146 @@
                 "2. Qualitative Chemistry", 
                 "3. Periodic Table & Bonding", 
                 "4. Chemical Changes", 
-                "5. Applied Chemistry (কর্মমুখী রসায়ন)", 
-                "6. Environmental Chemistry (পরিবেশগত রসায়ন)", 
-                "7. Organic Chemistry (য有機 রসায়ন)", 
-                "8. Quantitative Chemistry (পরিমাণগত রসায়ন)", 
+                "5. Applied Chemistry", 
+                "6. Environmental Chemistry", 
+                "7. Organic Chemistry", 
+                "8. Quantitative Chemistry", 
                 "9. Electrochemistry", 
                 "10. Periodic Properties & Other Topics"
             ],
             math: [
-                "1. Matrix & Determinant", "2. Vector", "3. Straight Line", "4. Circle", 
-                "5. Permutation & Combination", "6. Trigonometric Ratios", "7. Trigonometry", 
-                "8. Functions & Graphs", "9. Differentiation", "10. Integration", 
-                "11. Real Numbers & Inequalities", "12. Linear Programming", "13. Complex Numbers", 
-                "14. Polynomials (বহুপদী)", "15. Binomial Theorem", "16. Conics (কোনিক্স)", 
-                "17. Inverse Trigonometric Functions", "18. Statics (স্থিতিবিদ্যা)", 
-                "19. Motion in a Plane / Dynamics (সমতলে বস্তুর গতি)", "20. Probability"
+                "1. Matrix & Determinant", 
+                "2. Vector", 
+                "3. Straight Line", 
+                "4. Circle", 
+                "5. Permutation & Combination", 
+                "6. Trigonometric Ratios", 
+                "7. Trigonometry", 
+                "8. Functions & Graphs", 
+                "9. Differentiation", 
+                "10. Integration", 
+                "11. Real Numbers & Inequalities", 
+                "12. Linear Programming", 
+                "13. Complex Numbers", 
+                "14. Polynomials", 
+                "15. Binomial Theorem", 
+                "16. Conics", 
+                "17. Inverse Trigonometric Functions", 
+                "18. Statics", 
+                "19. Motion in a Plane / Dynamics", 
+                "20. Probability"
             ]
         };
 
-        const taskKeys =
+        const taskKeys = [
+            { id: 'class', label: 'Class' },
+            { id: 'slide', label: 'Slide' },
+            { id: 'practice', label: 'Practice' },
+            { id: 'exam', label: 'Exam' },
+            { id: 'mistake', label: 'Fix' },
+            { id: 'revision', label: 'Rev' }
+        ];
+
+        let currentSubject = 'physics';
+        let appData = JSON.parse(localStorage.getItem('acs_master_data') || '{}');
+
+        function switchSubject(subj) {
+            currentSubject = subj;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + subj).classList.add('active');
+            render();
+        }
+
+        function updateTask(idx, taskId, checked) {
+            if (!appData[currentSubject]) appData[currentSubject] = {};
+            if (!appData[currentSubject][idx]) appData[currentSubject][idx] = { tasks: {}, score: '' };
+            appData[currentSubject][idx].tasks[taskId] = checked;
+            localStorage.setItem('acs_master_data', JSON.stringify(appData));
+            render();
+        }
+
+        function updateScore(idx, val) {
+            if (!appData[currentSubject]) appData[currentSubject] = {};
+            if (!appData[currentSubject][idx]) appData[currentSubject][idx] = { tasks: {}, score: '' };
+            appData[currentSubject][idx].score = val;
+            localStorage.setItem('acs_master_data', JSON.stringify(appData));
+            render();
+        }
+
+        function render() {
+            const chapters = syllabus[currentSubject];
+            const container = document.getElementById('chapters-container');
+            container.innerHTML = '';
+
+            const subData = appData[currentSubject] || {};
+            let completedChaps = 0;
+            let totalChecked = 0;
+            let scoreSum = 0;
+            let scoredCount = 0;
+            const totalPossible = chapters.length * taskKeys.length;
+
+            chapters.forEach((title, idx) => {
+                const data = subData[idx] || { tasks: {}, score: '' };
+                let chapChecked = 0;
+
+                taskKeys.forEach(t => {
+                    if (data.tasks[t.id]) chapChecked++;
+                });
+
+                totalChecked += chapChecked;
+                const progressPct = Math.round((chapChecked / taskKeys.length) * 100);
+
+                let statusText = 'Pending';
+                let statusClass = 'badge';
+                if (progressPct === 100) {
+                    statusText = 'Done';
+                    statusClass = 'badge completed';
+                    completedChaps++;
+                } else if (progressPct > 0) {
+                    statusText = 'Active';
+                    statusClass = 'badge progress';
+                }
+
+                if (data.score !== '' && !isNaN(data.score)) {
+                    scoreSum += parseFloat(data.score);
+                    scoredCount++;
+                }
+
+                let tasksMarkup = taskKeys.map(t => {
+                    const isChecked = data.tasks[t.id] ? 'checked' : '';
+                    return `
+                        <label class="task-item">
+                            <input type="checkbox" ${isChecked} onchange="updateTask(${idx}, '${t.id}', this.checked)">
+                            <span>${t.label}</span>
+                        </label>
+                    `;
+                }).join('');
+
+                const card = document.createElement('div');
+                card.className = 'chapter-card';
+                card.innerHTML = `
+                    <div class="chapter-header">
+                        <div class="chapter-title">${title}</div>
+                        <span class="${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="tasks-grid">${tasksMarkup}</div>
+                    <div class="chapter-footer">
+                        <div>Score: <input type="number" class="score-input" value="${data.score || ''}" placeholder="--" onchange="updateScore(${idx}, this.value)">%</div>
+                        <div><b>${progressPct}%</b></div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            const overallPct = totalPossible > 0 ? Math.round((totalChecked / totalPossible) * 100) : 0;
+            const avgScore = scoredCount > 0 ? Math.round(scoreSum / scoredCount) : 0;
+
+            document.getElementById('overall-progress-text').innerText = overallPct + '%';
+            document.getElementById('completed-count').innerText = `${completedChaps}/${chapters.length}`;
+            document.getElementById('avg-score').innerText = avgScore + '%';
+        }
+
+        window.onload = render;
+    </script>
+</body>
+</html>
