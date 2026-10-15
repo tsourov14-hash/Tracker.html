@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACS Engineering Batch 2026 - Progress Tracker</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #0f172a; color: #f8fafc; padding: 20px; min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 25px; }
+        h1 { color: #818cf8; font-size: 24px; margin-bottom: 6px; }
+        p.subtitle { color: #94a3b8; font-size: 14px; }
+        
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .card { background-color: #1e293b; border: 1px solid #334155; padding: 18px; border-radius: 12px; }
+        .card-title { font-size: 13px; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+        .card-value { font-size: 28px; font-weight: 700; margin-top: 6px; color: #38bdf8; }
+        .progress-bar-bg { background-color: #334155; height: 8px; border-radius: 4px; margin-top: 10px; overflow: hidden; }
+        .progress-bar-fill { background-color: #6366f1; height: 100%; width: 0%; transition: width 0.3s ease; }
+
+        .chapter-card { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 16px; margin-bottom: 15px; }
+        .chapter-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .chapter-title { font-size: 16px; font-weight: 600; color: #f1f5f9; }
+        .badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 600; background-color: #334155; color: #94a3b8; }
+        .badge.completed { background-color: #065f46; color: #34d399; }
+        .badge.progress { background-color: #854d0e; color: #fde047; }
+
+        .tasks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; margin-bottom: 12px; }
+        .task-item { background-color: #0f172a; border: 1px solid #334155; padding: 8px 10px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-size: 12px; cursor: pointer; }
+        .task-item input { accent-color: #6366f1; width: 16px; height: 16px; }
+
+        .chapter-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #334155; padding-top: 10px; font-size: 12px; color: #94a3b8; }
+        .score-input { background: #0f172a; border: 1px solid #334155; color: #fff; padding: 4px 8px; border-radius: 6px; width: 70px; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ACS Engineering Batch 2026</h1>
+            <p class="subtitle">Physics Chapter Progress Tracker</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-title">Overall Progress</div>
+                <div class="card-value" id="overall-progress-text">0%</div>
+                <div class="progress-bar-bg"><div class="progress-bar-fill" id="overall-progress-bar"></div></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Chapters Completed</div>
+                <div class="card-value" id="completed-count" style="color: #34d399;">0 / 21</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Average Score</div>
+                <div class="card-value" id="avg-score">0%</div>
+            </div>
+        </div>
+
+        <div id="chapters-container"></div>
+    </div>
+
+    <script>
+        const physicsChapters = [
+            "Chapter 1: ভৌতজগত ও পরিমাপ (Physical World)",
+            "Chapter 2: ভেক্টর (Vector)",
+            "Chapter 3: গতিবিদ্যা (Dynamics)",
+            "Chapter 4: নিউটনীয় বলবিদ্যা (Newtonian Mechanics)",
+            "Chapter 5: কাজ, ক্ষমতা ও শক্তি (Work, Power & Energy)",
+            "Chapter 6: মহাকর্ষ ও অভিকর্ষ (Gravitation & Gravity)",
+            "Chapter 7: পদার্থের গাঠনিক ধর্ম (Material Property)",
+            "Chapter 8: পর্যাবৃত্ত গতি (Periodic Motion)",
+            "Chapter 9: তরঙ্গ (Wave)",
+            "Chapter 10: আদর্শ গ্যাস (Ideal Gas)",
+            "Chapter 11: তাপগতিবিদ্যা (Thermodynamics)",
+            "Chapter 12: স্থির তড়িৎ (Static Electricity)",
+            "Chapter 13: চলতড়িৎ (Current Electricity)",
+            "Chapter 14: তড়িৎ প্রবাহের চুম্বকক্রিয়া (Magnetic Effects)",
+            "Chapter 15: তাড়িত-চৌম্বক আবেশ (EM Induction)",
+            "Chapter 16: জ্যামিতিক আলোকবিজ্ঞান (Geometrical Optics)",
+            "Chapter 17: ভৌত আলোকবিজ্ঞান (Physical Optics)",
+            "Chapter 18: আধুনিক পদার্থবিজ্ঞান (Modern Physics)",
+            "Chapter 19: পরমাণুর মডেল (Atomic Model)",
+            "Chapter 20: অর্ধ-পরিবাহী (Semiconductor)",
+            "Chapter 21: জ্যোতির্বিজ্ঞান (Astronomy)"
+        ];
+
+        const taskKeys = [
+            { id: 'class', label: 'Class Done' },
+            { id: 'slide', label: 'Slide Rev' },
+            { id: 'practice', label: 'Practice' },
+            { id: 'exam', label: 'Exam' },
+            { id: 'mistake', label: 'Mistakes' },
+            { id: 'revision', label: 'Final Rev' }
+        ];
+
+        let appData = JSON.parse(localStorage.getItem('acs_physics_data')) || {};
+
+        function saveData() {
+            localStorage.setItem('acs_physics_data', JSON.stringify(appData));
+            render();
+        }
+
+        function updateTask(chapIdx, taskId, checked) {
+            if (!appData[chapIdx]) appData[chapIdx] = { tasks: {}, score: '' };
+            appData[chapIdx].tasks[taskId] = checked;
+            saveData();
+        }
+
+        function updateScore(chapIdx, val) {
+            if (!appData[chapIdx]) appData[chapIdx] = { tasks: {}, score: '' };
+            appData[chapIdx].score = val;
+            saveData();
+        }
+
+        function render() {
+            const container = document.getElementById('chapters-container');
+            container.innerHTML = '';
+
+            let completedChaps = 0;
+            let totalCheckedTasks = 0;
+            let scoreSum = 0;
+            let scoredCount = 0;
+
+            physicsChapters.forEach((title, idx) => {
+                const data = appData[idx] || { tasks: {}, score: '' };
+                let chapCheckedCount = 0;
+
+                taskKeys.forEach(t => {
+                    if (data.tasks[t.id]) chapCheckedCount++;
+                });
+
+                totalCheckedTasks += chapCheckedCount;
+                const progressPct = Math.round((chapCheckedCount / taskKeys.length) * 100);
+
+                let statusText = 'Not Started';
+                let statusClass = 'badge';
+                if (progressPct === 100) {
+                    statusText = 'Completed';
+                    statusClass = 'badge completed';
+                    completedChaps++;
+                } else if (progressPct > 0) {
+                    statusText = 'In Progress';
+                    statusClass = 'badge progress';
+                }
+
+                if (data.score !== '' && !isNaN(data.score)) {
+                    scoreSum += parseFloat(data.score);
+                    scoredCount++;
+                }
+
+                let tasksMarkup = taskKeys.map(t => {
+                    const isChecked = data.tasks[t.id] ? 'checked' : '';
+                    return `
+                        <label class="task-item">
+                            <input type="checkbox" ${isChecked} onchange="updateTask(${idx}, '${t.id}', this.checked)">
+                            <span>${t.label}</span>
+                        </label>
+                    `;
+                }).join('');
+
+                const card = document.createElement('div');
+                card.className = 'chapter-card';
+                card.innerHTML = `
+                    <div class="chapter-header">
+                        <div class="chapter-title">${title}</div>
+                        <span class="${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="tasks-grid">${tasksMarkup}</div>
+                    <div class="chapter-footer">
+                        <div>
+                            Exam Score (%): 
+                            <input type="number" class="score-input" value="${data.score || ''}" placeholder="0" onchange="updateScore(${idx}, this.value)">
+                        </div>
+                        <div><b>${progressPct}%</b> Done</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            const totalPossible = physicsChapters.length * taskKeys.length;
+            const overallPct = Math.round((totalCheckedTasks / totalPossible) * 100);
+            const avgScore = scoredCount > 0 ? Math.round(scoreSum / scoredCount) : 0;
+
+            document.getElementById('overall-progress-text').innerText = overallPct + '%';
+            document.getElementById('overall-progress-bar').style.width = overallPct + '%';
+            document.getElementById('completed-count').innerText = `${completedChaps} / ${physicsChapters.length}`;
+            document.getElementById('avg-score').innerText = avgScore + '%';
+        }
+
+        render();
+    </script>
+</body>
+</html>
