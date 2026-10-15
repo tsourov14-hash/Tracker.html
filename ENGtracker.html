@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACS Engineering Batch 2026 - Master Tracker</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #000000; color: #f8fafc; padding: 12px; min-height: 100vh; }
+        .container { max-width: 800px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 12px; }
+        h1 { color: #818cf8; font-size: 20px; margin-bottom: 2px; }
+        p.subtitle { color: #94a3b8; font-size: 12px; }
+
+        /* Subject Navigation Tabs */
+        .tabs { display: flex; gap: 8px; margin-bottom: 14px; justify-content: center; }
+        .tab-btn { background-color: #121212; border: 1px solid #27272a; color: #a1a1aa; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; flex: 1; max-width: 130px; text-align: center; transition: all 0.2s; }
+        .tab-btn.active { background-color: #6366f1; color: #ffffff; border-color: #6366f1; }
+
+        /* Compact Dashboard */
+        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+        .card { background-color: #121212; border: 1px solid #27272a; padding: 10px; border-radius: 8px; text-align: center; }
+        .card-title { font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+        .card-value { font-size: 18px; font-weight: 700; margin-top: 4px; color: #38bdf8; }
+
+        /* Scrollable List Area */
+        .chapters-scroll { max-height: 65vh; overflow-y: auto; padding-right: 4px; }
+        .chapters-scroll::-webkit-scrollbar { width: 4px; }
+        .chapters-scroll::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+
+        .chapter-card { background-color: #121212; border: 1px solid #27272a; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+        .chapter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .chapter-title { font-size: 13px; font-weight: 600; color: #f1f5f9; }
+        .badge { font-size: 10px; padding: 2px 8px; border-radius: 12px; font-weight: 600; background-color: #27272a; color: #a1a1aa; }
+        .badge.completed { background-color: #065f46; color: #34d399; }
+        .badge.progress { background-color: #854d0e; color: #fde047; }
+
+        .tasks-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-bottom: 8px; }
+        .task-item { background-color: #000000; border: 1px solid #27272a; padding: 4px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9px; cursor: pointer; text-align: center; color: #a1a1aa; }
+        .task-item input { accent-color: #6366f1; width: 14px; height: 14px; }
+
+        .chapter-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #27272a; padding-top: 6px; font-size: 11px; color: #94a3b8; }
+        .score-input { background: #000000; border: 1px solid #27272a; color: #fff; padding: 2px 4px; border-radius: 4px; width: 50px; text-align: center; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ACS Engineering Batch 2026</h1>
+            <p class="subtitle">Master Progress Tracker</p>
+        </header>
+
+        <!-- Subject Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active"
