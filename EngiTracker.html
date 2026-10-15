@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACS Engineering Batch 2026 - Master Tracker</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #000000; color: #f8fafc; padding: 12px; min-height: 100vh; }
+        .container { max-width: 800px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 12px; }
+        h1 { color: #818cf8; font-size: 20px; margin-bottom: 2px; }
+        p.subtitle { color: #94a3b8; font-size: 12px; }
+
+        .tabs { display: flex; gap: 8px; margin-bottom: 14px; justify-content: center; }
+        .tab-btn { background-color: #121212; border: 1px solid #27272a; color: #a1a1aa; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; flex: 1; max-width: 130px; text-align: center; }
+        .tab-btn.active { background-color: #6366f1; color: #ffffff; border-color: #6366f1; }
+
+        .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
+        .card { background-color: #121212; border: 1px solid #27272a; padding: 10px; border-radius: 8px; text-align: center; }
+        .card-title { font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+        .card-value { font-size: 18px; font-weight: 700; margin-top: 4px; color: #38bdf8; }
+
+        .chapters-scroll { max-height: 65vh; overflow-y: auto; padding-right: 4px; }
+        .chapters-scroll::-webkit-scrollbar { width: 4px; }
+        .chapters-scroll::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+
+        .chapter-card { background-color: #121212; border: 1px solid #27272a; border-radius: 8px; padding: 10px; margin-bottom: 8px; }
+        .chapter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .chapter-title { font-size: 13px; font-weight: 600; color: #f1f5f9; }
+        .badge { font-size: 10px; padding: 2px 8px; border-radius: 12px; font-weight: 600; background-color: #27272a; color: #a1a1aa; }
+        .badge.completed { background-color: #065f46; color: #34d399; }
+        .badge.progress { background-color: #854d0e; color: #fde047; }
+
+        .tasks-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-bottom: 8px; }
+        .task-item { background-color: #000000; border: 1px solid #27272a; padding: 4px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9px; cursor: pointer; text-align: center; color: #a1a1aa; }
+        .task-item input { accent-color: #6366f1; width: 14px; height: 14px; }
+
+        .chapter-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #27272a; padding-top: 6px; font-size: 11px; color: #94a3b8; }
+        .score-input { background: #000000; border: 1px solid #27272a; color: #fff; padding: 2px 4px; border-radius: 4px; width: 50px; text-align: center; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ACS Engineering Batch 2026</h1>
+            <p class="subtitle">Master Progress Tracker</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-btn active" id="btn-physics" onclick="switchSubject('physics')">Physics</button>
+            <button class="tab-btn" id="btn-chemistry" onclick="switchSubject('chemistry')">Chemistry</button>
+            <button class="tab-btn" id="btn-math" onclick="switchSubject('math')">Math</button>
+        </div>
+
+        <div class="dashboard">
+            <div class="card">
+                <div class="card-title">Progress</div>
+                <div class="card-value" id="overall-progress-text">0%</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Completed</div>
+                <div class="card-value" id="completed-count" style="color: #34d399;">0</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Avg Score</div>
+                <div class="card-value" id="avg-score">0%</div>
+            </div>
+        </div>
+
+        <div class="chapters-scroll" id="chapters-container"></div>
+    </div>
+
+    <script>
+        const syllabus = {
+            physics: [
+                "1. Physical World & Measurement", "2. Vector", "3. Dynamics", "4. Newtonian Mechanics",
+                "5. Work, Power & Energy", "6. Gravitation & Gravity", "7. Material Properties", "8. Periodic Motion",
+                "9. Wave", "10. Ideal Gas", "11. Thermodynamics", "12. Static Electricity", "13. Current Electricity",
+                "14. Magnetic Effects", "15. EM Induction", "16. Geometrical Optics", "17. Physical Optics",
+                "18. Modern Physics", "19. Atomic & Nuclear Physics", "20. Semiconductor", "21. Astronomy"
+            ],
+            chemistry: [
+                "1. Lab Safety & Intro", "2. Qualitative Chemistry", "3. Periodic Table & Bonding",
+                "4. Chemical Changes", "5. Environmental Chemistry", "6. Organic Chemistry 1",
+                "7. Organic Chemistry 2", "8. Quantitative Chemistry", "9. Electrochemistry", "10. Economic Chemistry"
+            ],
+            math: [
+                "1. Matrix & Determinant", "2. Vector", "3. Straight Line", "4. Circle", 
+                "5. Permutation & Combination", "6. Trigonometric Ratios", "7. Trigonometry", 
+                "8. Functions & Graphs", "9. Differentiation", "10. Integration", 
+                "11. Real Numbers & Inequalities", "12. Linear Programming", "13. Complex Numbers", 
+                "14. Polynomials (বহুপদী)", "15. Binomial Theorem", "16. Conics (কোনিক্স)", 
+                "17. Inverse Trigonometric Functions", "18. Statics (স্থিতিবিদ্যা)", 
+                "19. Motion in a Plane / Dynamics (সমতলে বস্তুর গতি)", "20. Probability"
+            ]
+        };
+
+        const taskKeys = [
+            { id: 'class', label: 'Class' },
+            { id: 'slide', label: 'Slide' },
+            { id: 'practice', label: 'Practice' },
+            { id: 'exam', label: 'Exam' },
+            { id: 'mistake', label: 'Fix' },
+            { id: 'revision', label: 'Rev' }
+        ];
+
+        let currentSubject = 'physics';
+        let appData = JSON.parse(localStorage.getItem('acs_master_data') || '{}');
+
+        function switchSubject(subj) {
+            currentSubject = subj;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('btn-' + subj).classList.add('active');
+            render();
+        }
+
+        function updateTask(idx, taskId, checked) {
+            if (!appData[currentSubject]) appData[currentSubject] = {};
+            if (!appData[currentSubject][idx]) appData[currentSubject][idx] = { tasks: {}, score: '' };
+            appData[currentSubject][idx].tasks[taskId] = checked;
+            localStorage.setItem('acs_master_data', JSON.stringify(appData));
+            render();
+        }
+
+        function updateScore(idx, val) {
+            if (!appData[currentSubject]) appData[currentSubject] = {};
+            if (!appData[currentSubject][idx]) appData[currentSubject][idx] = { tasks: {}, score: '' };
+            appData[currentSubject][idx].score = val;
+            localStorage.setItem('acs_master_data', JSON.stringify(appData));
+            render();
+        }
+
+        function render() {
+            const chapters = syllabus[currentSubject];
+            const container = document.getElementById('chapters-container');
+            container.innerHTML = '';
+
+            const subData = appData[currentSubject] || {};
+            let completedChaps = 0;
+            let totalChecked = 0;
+            let scoreSum = 0;
+            let scoredCount = 0;
+            const totalPossible = chapters.length * taskKeys.length;
+
+            chapters.forEach((title, idx) => {
+                const data = subData[idx] || { tasks: {}, score: '' };
+                let chapChecked = 0;
+
+                taskKeys.forEach(t => {
+                    if (data.tasks[t.id]) chapChecked++;
+                });
+
+                totalChecked += chapChecked;
+                const progressPct = Math.round((chapChecked / taskKeys.length) * 100);
+
+                let statusText = 'Pending';
+                let statusClass = 'badge';
+                if (progressPct === 100) {
+                    statusText = 'Done';
+                    statusClass = 'badge completed';
+                    completedChaps++;
+                } else if (progressPct > 0) {
+                    statusText = 'Active';
+                    statusClass = 'badge progress';
+                }
+
+                if (data.score !== '' && !isNaN(data.score)) {
+                    scoreSum += parseFloat(data.score);
+                    scoredCount++;
+                }
+
+                let tasksMarkup = taskKeys.map(t => {
+                    const isChecked = data.tasks[t.id] ? 'checked' : '';
+                    return `
+                        <label class="task-item">
+                            <input type="checkbox" ${isChecked} onchange="updateTask(${idx}, '${t.id}', this.checked)">
+                            <span>${t.label}</span>
+                        </label>
+                    `;
+                }).join('');
+
+                const card = document.createElement('div');
+                card.className = 'chapter-card';
+                card.innerHTML = `
+                    <div class="chapter-header">
+                        <div class="chapter-title">${title}</div>
+                        <span class="${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="tasks-grid">${tasksMarkup}</div>
+                    <div class="chapter-footer">
+                        <div>Score: <input type="number" class="score-input" value="${data.score || ''}" placeholder="--" onchange="updateScore(${idx}, this.value)">%</div>
+                        <div><b>${progressPct}%</b></div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            const overallPct = totalPossible > 0 ? Math.round((totalChecked / totalPossible) * 100) : 0;
+            const avgScore = scoredCount > 0 ? Math.round(scoreSum / scoredCount) : 0;
+
+            document.getElementById('overall-progress-text').innerText = overallPct + '%';
+            document.getElementById('completed-count').innerText = `${completedChaps}/${chapters.length}`;
+            document.getElementById('avg-score').innerText = avgScore + '%';
+        }
+
+        // Initialize display immediately on load
+        window.onload = render;
+    </script>
+</body>
+</html>
